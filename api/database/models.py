@@ -1,5 +1,5 @@
 from mongoengine import *
-
+import datetime
 
 class Checkpoint(EmbeddedDocument):
     """
@@ -9,7 +9,10 @@ class Checkpoint(EmbeddedDocument):
 		open_time: MongoEngine datetime field, required, (checkpoint opening time),
 		close_time: MongoEngine datetime field, required, (checkpoint closing time).
     """
-    pass
+    distance = FloatField(default = 0, required=True)
+    location = StringField(max_length = 100)
+    open_time = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    close_time = DateTimeField(default=datetime.datetime.utcnow, required=True)
 
 
 class Brevet(Document):
@@ -19,4 +22,6 @@ class Brevet(Document):
 		start_time: MongoEngine datetime field, required
 		checkpoints: MongoEngine list field of Checkpoints, required
     """
-    pass
+    length = FloatField(default = 0, required=True)
+    start_time = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    checkpoints = EmbeddedDocumentListField(Checkpoint, required=True)

@@ -5,7 +5,7 @@ from flask import Response, request
 from flask_restful import Resource
 
 # You need to implement this in database/models.py
-from database.models import Brevet
+from database.models import BrevetClass
 
 # MongoEngine queries:
 # Brevet.objects() : similar to find_all. Returns a MongoEngine query
@@ -31,7 +31,7 @@ from database.models import Brevet
 class Brevet(Resource):
     def get(self, _id):
         # Should display brevet with the id: _id
-        brev_obj = Brevet.objects.get(id=_id)
+        brev_obj = BrevetClass.objects.get(id=_id)
         json_object = brev_obj.to_json()
         return Response(json_object, mimetype="application/json", status=200)
 
@@ -44,20 +44,21 @@ class Brevet(Resource):
 
         # Because input_json is a dictionary, we can do this:
         length = input_json["length"] # Should be a float
-        start_time = input_json["start_time"] # Should be a datetime
+        start_time = input_json["start_time"] # Should be a string
         checkpoints = input_json["checkpoints"] # Should be a list of dictionaries
 
         # Now, update the record that exists in the database with the data we obtained
-        result = Brevet.objects(id=_id).modify(length=length, start_time=start_time, checkpoints=checkpoints)
+        #result = BrevetClass.objects(id=_id).modify(length=length, start_time=start_time, checkpoints=checkpoints)
+        result = BrevetClass.objects(id=_id).update_one(length=length, start_time=start_time, checkpoints=checkpoints)
         # result of modify() will be True or False, True if document has been updated
 
-        if(result == True):
+        if(result == 1): # update_one returns the number of updated documents, which should be 1
             return f"Updated the record that has the id: {_id}"
         else:
-            return f"Something went wrong! Could not update the record"
+            return f"Something went wrong! Could not update the record! result is: {result}"
 
     def delete(self, _id):
         # Should delete brevet with the id: _id
-        Brevet.objects(id=_id).delete() # does not return anything
+        BrevetClass.objects(id=_id).delete() # does not return anything
 
         return f"Deleted the record with id: {_id}"

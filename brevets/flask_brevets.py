@@ -6,25 +6,18 @@ Replacement for RUSA ACP brevet time calculator
 
 import os
 import logging
+import requests # The library we use to send requests to the API
 
 import flask
 from flask import request
 import arrow  # Replacement for datetime, based on moment.js
 import acp_times  # Brevet time calculations
-import requests # The library we use to send requests to the API
+
+import datetime # allows us to convert a string (our start time) to datetime type
 
 #from pymongo_funcs import brevet_insert, brevet_fetch
 
-###
-# Globals
-###
 app = flask.Flask(__name__)
-app.debug = True if "DEBUG" not in os.environ else os.environ["DEBUG"]
-port_num = True if "PORT" not in os.environ else os.environ["PORT"]
-
-###
-# Pages
-###
 
 ##################################################
 ################### API Callers ################## 
@@ -32,17 +25,44 @@ port_num = True if "PORT" not in os.environ else os.environ["PORT"]
 
 API_ADDR = os.environ["API_ADDR"]
 API_PORT = os.environ["API_PORT"]
-API_URL = f"http://{API_ADDR}:{API_PORT}/api/"
+API_URL = f"http://{API_ADDR}:{API_PORT}/api"
 
 def brevet_fetch():
     """
     Fetches the newest document in "brevets" collection in database "mybrevetsdb"
     by calling RESTful API
 
-    Returns start date (string) and items (list of dictionaries) as a tuple
+    Returns start date (string), length, and items (list of dictionaries) as a tuple
     """
 
-def brevet_insert():
+    app.logger.debug(f"In brevet_fetch!")
+
+    brevets = requests.get(f"{API_URL}/brevets").json() # everything should arrive as strings
+
+    # brevets should be a list of dictionaries, so now we can just return the last one in the list (which is the newest one)
+    newest_brevet = brevets[-1]
+    return newest_brevet["start_time"], newest_brevet["length"], newest_brevet["checkpoints"]
+
+
+def brevet_insert(start_time, length, checkpoints):
+    """
+    Inserts brevet data into the database by calling the RESTful API.
+
+    Inserts a start date (datetime), length (string) and checkpoints (list of dictionaries)
+
+    Returns unique ID assigned to document by mongo
+    """
+
+    app.logger.debug(f"In brevet_insert! Doing requests.post and passing the following data:")
+    app.logger.debug(f"start_time: {start_time}, {type(start_time)}") # has type string
+    app.logger.debug(f"length: {length}, {type(length)}") # has type string
+    app.logger.debug(f"checkpoints: {checkpoints}, {type(checkpoints)}") # checkpoints is list of dicts
+
+    _id = requests.post(f"{API_URL}/brevets", json={"start_time": start_time, "length": length, "checkpoints": checkpoints}).json()
+
+    app.logger.debug(f"the _id returned: {_id}, {type(_id)}")
+
+    return _id
 
 
 @app.route("/")
@@ -101,24 +121,30 @@ def submit():
         
         # Because input_json is a dictionary, we can retrieve the start date, brevet distance and checkpoints
         start_time = input_json["start_time"] # Should be a string
-        brevet_distance = input_json["brevet_dist"]
+        length = input_json["brevet_dist"]
         checkpoints = input_json["checkpoints"] # Should be a list of dictionaries, each dictionary is a checkpoint's data
+        # datetimes not JSON serializable, so need to wait to convert
 
-        insertion_id = brevet_insert(start_time, brevet_distance, checkpoints) # insertion_id is the primary key for this insertion
+        app.logger.debug("About to call brevet_insert!")
+        insertion_id = brevet_insert(start_time, length, checkpoints) # insertion_id is the primary key for this insertion
 
         return flask.jsonify(result={},
-                        message="Inserted the brevet data!", 
+                        message=f"Inserted the brevet data!", 
                         status=1, # This is defined by you. You just read this value in your javascript.
                         mongo_id=insertion_id)
-    except:
+    except Exception as e:
         # The reason for the try and except is to ensure Flask responds with a JSON.
         # If Flask catches your error, it means you didn't catch it yourself,
         # And Flask, by default, returns the error in an HTML.
         # We want /insert to respond with a JSON no matter what!
+        app.logger.debug("Exception is below:")
+        app.logger.debug(e)
+
         return flask.jsonify(result={},
                         message="Oh no! Server error while attempting to submit data!", 
                         status=0, 
                         mongo_id='None')
+                        #datetime_obj = insertion_id)
 
 
 @app.route("/fetch")
@@ -129,12 +155,19 @@ def fetch():
     JSON interface: gets JSON, responds with JSON
     """
     try:
+        app.logger.debug(f"About to call brevet_fetch!")
         start_time_res, brev_dist_res, chckpts_res = brevet_fetch()
+
+        brev_dist_str = str(brev_dist_res) # make sure is a string when jsonify
+
         return flask.jsonify(
                 result={"start_time": start_time_res, "brev_dist": brev_dist_res, "checkpoints": chckpts_res}, 
                 status=1,
                 message="Fetched the brevet data!")
-    except:
+    except Exception as e:
+        app.logger.debug("Exception while attempting to fetch is below:")
+        app.logger.debug(e)
+
         return flask.jsonify(
                 result={}, 
                 status=0,

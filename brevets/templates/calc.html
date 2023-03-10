@@ -182,10 +182,9 @@
 
                            // Want to submit all 20 rows, so don't need to check if row is filled in or not
                            checkpoint_json = {
-                                 "miles": miles,
-                                 "km": km,
-                                 "open": open,
-                                 "close": close
+                                 "distance": km,
+                                 "open_time": open,
+                                 "close_time": close
                            }
                            checkpoints.push(checkpoint_json);
                         });
@@ -236,17 +235,22 @@
                                  // Will have 20 rows, so need to loop through and update each row's data with the fetched data
                                  $('.control').each(function() {
                                     var mycp = checkpoints[cp_index]; // mycp is a dictionary, so now get the data by using the keys
-                                    //console.log(mycp)
+                                    console.log(mycp);
                                     
-                                    var cp_miles = mycp["miles"];
-                                    var cp_km = mycp["km"];
-                                    var cp_open = mycp["open"];
-                                    var cp_close = mycp["close"];
+                                    var cp_km = mycp["distance"];
+                                    var cp_open = mycp["open_time"];
+                                    var cp_close = mycp["close_time"];
 
                                     var checkpoint = $(this); // Again, set the current row to checkpoint
                                     // Next, in the row currently selected fill in the values with the data we have
-                                    checkpoint.find("input[name='miles']").val(cp_miles);
+                                    console.log("cp_km:");
+                                    console.log(cp_km);
+                                    checkpoint.find("input[name='miles']").val('');
                                     checkpoint.find("input[name='km']").val(cp_km);
+                                    if(cp_km != '') {
+                                       var km_calc = parseFloat(cp_km); //cp_km is a string, so can get float val and calculate miles val
+                                       checkpoint.find("input[name='miles']").val((0.621371 * km_calc).toFixed(6));
+                                    }
                                     checkpoint.find("input[name='open']").val(cp_open);
                                     checkpoint.find("input[name='close']").val(cp_close);
 

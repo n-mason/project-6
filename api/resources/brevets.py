@@ -5,7 +5,26 @@ from flask import Response, request
 from flask_restful import Resource
 
 # You need to implement this in database/models.py
-from database.models import Brevet
+from database.models import Brevet, Checkpoint
+
+import datetime
+"""
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger('Brevets Resource')
+
+logger.debug("HELLO THERE!")
+"""
+import flask
+import os
+import logging
+
+app = flask.Flask(__name__)
+app.debug = os.environ["DEBUG"]
+if app.debug:
+    app.logger.setLevel(logging.DEBUG)
+
+app.logger.debug("THIS IS A TEST")
 
 # MongoEngine queries:
 # Brevet.objects() : similar to find_all. Returns a MongoEngine query
@@ -31,7 +50,9 @@ from database.models import Brevet
 class Brevets(Resource):
     def get(self):
         # Should display all brevets stored in the database
+        
         json_object = Brevet.objects().to_json()
+        
         return Response(json_object, mimetype="application/json", status=200)
 
     def post(self):
@@ -41,10 +62,13 @@ class Brevets(Resource):
         # This will fail if the request body is NOT a JSON.
         input_json = request.json
 
-        # Because input_json is a dictionary, we can do this:s
-        length = input_json["length"] # Should be a float
-        start_time = input_json["start_time"] # Should be a datetime
+        # Because input_json is a dictionary, we can do this:
+        start_time = input_json["start_time"] # Should be a string
+        length = input_json["length"] # Should be a string
         checkpoints = input_json["checkpoints"] # Should be a list of dictionaries
 
-        result = Brevet(length=length, start_time=start_time, checkpoints=checkpoints).save()
+        length_float = float(length) # convert to float
+        
+        result = Brevet(length=length_float, start_time=start_time, checkpoints=checkpoints).save()
+
         return {'_id': str(result.id)}, 200

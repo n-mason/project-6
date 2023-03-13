@@ -4,12 +4,12 @@ import datetime
 class Checkpoint(EmbeddedDocument):
     """
     A MongoEngine EmbeddedDocument containing:
-    distance: MongoEngine string field, required, (checkpoint distance in kilometers),
+    distance: MongoEngine float field, required, (checkpoint distance in kilometers),
 		location: MongoEngine string field, optional, (checkpoint location name),
 		open_time: MongoEngine string field, required, (checkpoint opening time),
 		close_time: MongoEngine string field, required, (checkpoint closing time).
     """
-    distance = StringField(required=True)
+    distance = FloatField(required=True)
     location = StringField()
     open_time = StringField(required=True)
     close_time = StringField(required=True)

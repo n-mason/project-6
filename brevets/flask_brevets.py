@@ -41,6 +41,15 @@ def brevet_fetch():
 
     # brevets should be a list of dictionaries, so now we can just return the last one in the list (which is the newest one)
     newest_brevet = brevets[-1]
+
+    # go through the checkpoints and convert distances back to strings
+    for checkpoint in newest_brevet["checkpoints"]:
+        if checkpoint["distance"] != 999:
+            checkpoint["distance"] = int(checkpoint["distance"]) # get rid of decimal point values
+            checkpoint["distance"] = str(checkpoint["distance"]) # now we should have strings in the correct format
+        else:
+            checkpoint["distance"] = ''
+
     return newest_brevet["start_time"], newest_brevet["length"], newest_brevet["checkpoints"]
 
 
@@ -57,6 +66,14 @@ def brevet_insert(start_time, length, checkpoints):
     app.logger.debug(f"start_time: {start_time}, {type(start_time)}") # has type string
     app.logger.debug(f"length: {length}, {type(length)}") # has type string
     app.logger.debug(f"checkpoints: {checkpoints}, {type(checkpoints)}") # checkpoints is list of dicts
+
+    # go through the checkpoints and make sure distance vals are floats
+    for checkpoint in checkpoints:
+        if checkpoint["distance"] != '':
+            checkpoint["distance"] = float(checkpoint["distance"]) # now strings should be converted to floats
+        else:
+            checkpoint["distance"] = 999 # can have 0 as a checkpoint distance (the first checkpoint), so we need to use a 
+            # different float value for the empty string '' cp distance case
 
     _id = requests.post(f"{API_URL}/brevets", json={"start_time": start_time, "length": length, "checkpoints": checkpoints}).json()
 

@@ -5,7 +5,7 @@ from flask import Response, request
 from flask_restful import Resource
 
 # You need to implement this in database/models.py
-from database.models import BrevetClass, Checkpoint
+from database.models import Brevet, Checkpoint
 
 import datetime
 """
@@ -24,7 +24,7 @@ app.debug = os.environ["DEBUG"]
 if app.debug:
     app.logger.setLevel(logging.DEBUG)
 
-app.logger.debug("THIS IS A TEST")
+#app.logger.debug("This is a test")
 
 # MongoEngine queries:
 # Brevet.objects() : similar to find_all. Returns a MongoEngine query
@@ -51,7 +51,7 @@ class Brevets(Resource):
     def get(self):
         # Should display all brevets stored in the database
         
-        json_object = BrevetClass.objects().to_json()
+        json_object = Brevet.objects().to_json()
         
         return Response(json_object, mimetype="application/json", status=200)
 
@@ -69,6 +69,6 @@ class Brevets(Resource):
 
         length_float = float(length) # convert to float
         
-        result = BrevetClass(length=length_float, start_time=start_time, checkpoints=checkpoints).save()
+        result = Brevet(length=length_float, start_time=start_time, checkpoints=checkpoints).save()
 
         return {'_id': str(result.id)}, 200

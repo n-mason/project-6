@@ -5,7 +5,7 @@ from flask import Response, request
 from flask_restful import Resource
 
 # You need to implement this in database/models.py
-from database.models import BrevetClass
+from database.models import Brevet
 
 # MongoEngine queries:
 # Brevet.objects() : similar to find_all. Returns a MongoEngine query
@@ -28,37 +28,25 @@ from database.models import BrevetClass
 # directly instead of letting Flask-RESTful attempt to convert it to a
 # JSON for you.
 
-class Brevet(Resource):
+class BrevetResource(Resource):
     def get(self, _id):
         # Should display brevet with the id: _id
-        brev_obj = BrevetClass.objects.get(id=_id)
+        brev_obj = Brevet.objects.get(id=_id)
         json_object = brev_obj.to_json()
         return Response(json_object, mimetype="application/json", status=200)
 
     def put(self, _id):
-        # Should update brevet with id: _id with object in request
+        # Should update brevet with id: _id with object in request, PUT should still work if only one field is specified
 
         # Read the entire request body as a JSON
         # This will fail if the request body is NOT a JSON.
         input_json = request.json
 
-        # Because input_json is a dictionary, we can do this:
-        length = input_json["length"] # Should be a float
-        start_time = input_json["start_time"] # Should be a string
-        checkpoints = input_json["checkpoints"] # Should be a list of dictionaries
-
-        # Now, update the record that exists in the database with the data we obtained
-        #result = BrevetClass.objects(id=_id).modify(length=length, start_time=start_time, checkpoints=checkpoints)
-        result = BrevetClass.objects(id=_id).update_one(length=length, start_time=start_time, checkpoints=checkpoints)
-        # result of modify() will be True or False, True if document has been updated
-
-        if(result == 1): # update_one returns the number of updated documents, which should be 1
-            return f"Updated the record that has the id: {_id}"
-        else:
-            return f"Something went wrong! Could not update the record! result is: {result}"
+        Brevet.objects.get(id=_id).update(**input_json)
+        return f"Updated the record with id: {_id}", 200
 
     def delete(self, _id):
         # Should delete brevet with the id: _id
-        BrevetClass.objects(id=_id).delete() # does not return anything
+        Brevet.objects(id=_id).delete() # does not return anything
 
-        return f"Deleted the record with id: {_id}"
+        return f"Deleted the record with id: {_id}", 200

@@ -15,7 +15,7 @@ class Checkpoint(EmbeddedDocument):
     close_time = StringField(required=True)
 
 
-class BrevetClass(Document):
+class Brevet(Document):
     """
     A MongoEngine document containing:
 		length: MongoEngine float field, required
